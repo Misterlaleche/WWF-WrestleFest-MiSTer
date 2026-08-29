@@ -1,4 +1,4 @@
-name: Build MiSTer core
+name: Build GFXFIX7-SYNC-A-B
 
 on:
   workflow_dispatch:
@@ -6,11 +6,15 @@ on:
     branches: [main]
     paths:
       - "cores/wwfwfest/**"
+      - "patches/**"
+      - "doc/custom.xml"
       - "release/mra/**"
       - ".github/workflows/build.yml"
   pull_request:
     paths:
       - "cores/wwfwfest/**"
+      - "patches/**"
+      - "doc/custom.xml"
       - "release/mra/**"
       - ".github/workflows/build.yml"
 
@@ -21,7 +25,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out core source
+      - name: Check out public core repository
         uses: actions/checkout@v5
 
       - name: Reject ROMs and proprietary game data
@@ -35,10 +39,11 @@ jobs:
             exit 1
           fi
 
-      - name: Check out JTCORES and JTFRAME
+      - name: Check out pinned official JTCORES and JTFRAME
         uses: actions/checkout@v5
         with:
           repository: jotego/jtcores
+          ref: ebcfa6cd61c1a59be351fcebef6511fdcdb4d1d7
           path: jtcores
           submodules: false
 
@@ -48,10 +53,26 @@ jobs:
           git submodule update --init --depth=1 \
             modules/fx68k modules/jt51 modules/jt6295
 
-      - name: Add the WWF WrestleFest core
+      - name: Overlay WWF WrestleFest GFXFIX7 source
+        shell: bash
         run: |
           cp -a cores/wwfwfest jtcores/cores/
           cp doc/custom.xml jtcores/doc/custom.xml
+          git -C jtcores apply --check ../patches/jtframe-gfxfix7-sync-ab.patch
+          git -C jtcores apply ../patches/jtframe-gfxfix7-sync-ab.patch
+
+      - name: Verify GFXFIX7-SYNC-A-B identity
+        shell: bash
+        run: |
+          grep -Fq 'CORE_OSD=OF,CRT Sync,JTFRAME,RAW Core;' \
+            jtcores/cores/wwfwfest/cfg/macros.def
+          grep -Fq 'status[15] ? hs : hs_resync' \
+            jtcores/modules/jtframe/target/mister/hdl/jtframe_mister.sv
+          grep -Fq 'status[15] ? vs : vs_resync' \
+            jtcores/modules/jtframe/target/mister/hdl/jtframe_mister.sv
+          printf '%s  %s\n' \
+            '3670e31e69a6cac545eec5b460351762030953c0cb640f02e734eabc6d555980' \
+            'release/mra/WWF WrestleFest (World).mra' | sha256sum -c -
 
       - name: Compile MiSTer RBF with JTFRAME
         working-directory: jtcores
@@ -60,19 +81,20 @@ jobs:
             jotego/jtcore20 \
             /jtcores/modules/jtframe/devops/xjtcore.sh wwfwfest mister
 
-      - name: Collect test build
+      - name: Collect matching GFXFIX7 test build
         shell: bash
         run: |
           mkdir -p artifact
           find jtcores/release -type f -iname '*wwfwfest*.rbf' \
             -exec cp -v {} artifact/jtwwfwfest.rbf \;
           cp 'release/mra/WWF WrestleFest (World).mra' artifact/
-          test -f artifact/jtwwfwfest.rbf
+          cp docs/TESTING.md artifact/
+          test -s artifact/jtwwfwfest.rbf
 
-      - name: Upload MiSTer test build
+      - name: Upload GFXFIX7-SYNC-A-B test build
         uses: actions/upload-artifact@v6
         with:
-          name: WWF-WrestleFest-MiSTer-${{ github.sha }}
+          name: WWF-WrestleFest-GFXFIX7-SYNC-A-B-${{ github.sha }}
           path: artifact
           if-no-files-found: error
           retention-days: 30
