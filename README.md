@@ -2,7 +2,12 @@
 
 Work-in-progress FPGA core for the arcade hardware used by **WWF WrestleFest**
 (Technos Japan, 1991), targeting **MiSTer FPGA**.
+## Download current test build
 
+**[⬇️ Download GFXFIX7-SYNC-A-B](https://github.com/Misterlaleche/WWF-WrestleFest-MiSTer/releases/tag/GFXFIX7-SYNC-A-B)**
+
+This is the current public pre-release for hardware testing. The download includes
+the compiled MiSTer core and matching MRA, but no game ROMs.
 > [!IMPORTANT]
 > **No game ROMs are included or distributed by this project.** The source,
 > build artifacts and releases contain no copyrighted game data. Users must
