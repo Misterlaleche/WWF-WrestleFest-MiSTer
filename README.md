@@ -1,59 +1,70 @@
 # WWF WrestleFest for MiSTer FPGA
 
 Work-in-progress FPGA core for the arcade hardware used by **WWF WrestleFest**
-(Technos Japan, 1991), targeting the **MiSTer FPGA** platform.
+(Technos Japan, 1991), targeting **MiSTer FPGA**.
 
 > [!IMPORTANT]
-> **No game ROMs are included or distributed by this project.**
-> The source tree, build artifacts and releases do not contain copyrighted game
-> data. Users must supply their own legally obtained compatible ROM dump.
+> **No game ROMs are included or distributed by this project.** The source,
+> build artifacts and releases contain no copyrighted game data. Users must
+> supply their own legally obtained compatible ROM dump.
 
-## Project status
+## Reference build
 
-This core is under active development and should be treated as an experimental
-test build. It is not yet considered release-quality or cycle-accurate.
+The current public reference is **GFXFIX7-SYNC-A-B**. It keeps the stable
+GFXFIX6 graphics path and does **not** include the experimental GFXFIX5 sprite
+pipeline.
+
+This diagnostic build adds one OSD option:
+
+| `CRT Sync` mode | Behaviour |
+|---|---|
+| `JTFRAME` | Normal MiSTer route through `jtframe_resync`; CRT H/V offset controls remain active. |
+| `RAW Core` | Bypasses `jtframe_resync` and forwards the core's HS/VS timing; CRT H/V offsets deliberately do not act. |
+
+Switching modes does not change the core resolution, pixel clock, blanking,
+CPU clocks, IRQ timing or game speed. Its purpose is to compare the physical
+north-to-south image height on a CRT without changing display controls.
+
+## Development status
+
+This is an experimental test core, not a finished or cycle-accurate release.
 
 | Area | Current status |
 |---|---|
-| Main CPU and memory map | Implemented |
-| Tilemaps, text and sprites | Implemented; simulation validated |
-| Sprite colours and palette path | Corrected; simulation validated |
-| Four-player inputs | Implemented |
-| DIP switches | Exposed in the MiSTer OSD |
-| Service/Test | Exposed in the MiSTer OSD and keyboard controls |
+| Main CPU, memory map and interrupts | Implemented |
+| Tilemaps, text, sprites and palette | Implemented; simulation validated |
+| Four-player digital controls | Implemented |
+| Original arcade DIP switches | Defined in the MRA |
 | YM2151 + MSM6295 audio | Implemented; real-hardware listening tests pending |
-| HDMI output | Hardware testing pending |
-| Analogue 15 kHz output | Hardware testing pending |
-| Cheats | Not implemented |
-| Save states | Not implemented |
+| HDMI output | Hardware testing in progress |
+| Analogue 15 kHz output | GFXFIX7 A/B hardware test required |
+| Cheats / save states | Not implemented |
 
-Testing on real MiSTer hardware is particularly welcome. Please report both
-regressions and successful tests through the issue tracker.
-
-## Hardware and video target
+## Video target
 
 - MiSTer FPGA / DE10-Nano
-- Horizontal 4:3 video
-- 320 x 240 active resolution
+- Horizontal 4:3 picture
+- 320 × 240 active resolution
+- 448 × 272 complete raster
 - Approximately 57.45 Hz vertical refresh
-- Native 15 kHz-compatible timing for analogue CRT output
-- Up to four players
-- Two action buttons: Punch and Kick
+- Native 15 kHz-class analogue output
+- Up to four players, two action buttons: Punch and Kick
 
 ## Installing a test build
 
-Download the latest `.rbf` and `.mra` from the repository's **Releases** page.
+Download the matching `.rbf` and `.mra` from **Releases** or from a successful
+GitHub Actions artifact.
 
 1. Copy `jtwwfwfest.rbf` to `/media/fat/_Arcade/cores/`.
 2. Copy `WWF WrestleFest (World).mra` to `/media/fat/_Arcade/`.
 3. Supply a compatible `wwfwfest` ROM set from your own legal dump in a ROM
    path used by MiSTer, such as `/media/fat/games/mame/`.
-4. Start the game through the MRA entry in the Arcade menu.
+4. Launch the MRA from MiSTer's Arcade menu.
 
-The MRA lists the required chip filenames and CRC values, but contains no ROM
-data itself.
+The MRA contains filenames, layout and CRC metadata only. It contains no ROM
+bytes.
 
-## Controls and service functions
+## Controls
 
 | Function | Default control |
 |---|---|
@@ -62,72 +73,59 @@ data itself.
 | Kick | Button 2 |
 | Start | Start |
 | Coin | Select / Coin |
-| Service credit | Keyboard `9` |
-| Service/Test mode | OSD option / keyboard `F2` |
-| Core reset | Keyboard `F3` |
+| Core reset | MiSTer OSD |
 
-The core also exposes the original arcade DIP switches in the MiSTer OSD.
+## GFXFIX7 CRT test
 
-## Analogue video and VGA-to-SCART
+Use a correctly wired MiSTer analogue RGB/VGA-to-SCART cable and disable forced
+scandoubling for a 15 kHz CRT.
 
-The core is designed to output native arcade-rate video and should be suitable
-for MiSTer's analogue output through a correctly wired MiSTer VGA-to-SCART or
-RGB cable. Use a cable intended for MiSTer that provides the proper sync and
-SCART blanking voltages; a passive PC VGA-to-SCART cable is not necessarily
-equivalent.
+1. Set `CRT Sync` to `JTFRAME` and observe the physical image height.
+2. Without touching geometry, overscan or service controls on the CRT, change
+   only `CRT Sync` to `RAW Core`.
+3. Report whether the north-to-south height changes, along with the display,
+   cable/analogue board and relevant `MiSTer.ini` settings.
 
-When testing a 15 kHz CRT, disable forced scandoubling. Please include the
-display model, cable or analogue board, and relevant `MiSTer.ini` settings in
-video-related reports.
+In `RAW Core`, the MiSTer CRT H/V offset options no longer affect the picture by
+design. If both modes have identical height, `jtframe_resync` is unlikely to be
+the cause and investigation can focus on the 448 × 272 / 57.45 Hz raster.
 
 ## Building
 
-The synthesizable core lives in `cores/wwfwfest`. It is compiled against the
-JTFRAME infrastructure from the upstream `jotego/jtcores` repository.
+The synthesizable core is in `cores/wwfwfest`. The GitHub Actions workflow:
 
-The included GitHub Actions workflow checks that no ROM images are present,
-checks out the required JTFRAME tree, overlays this core and builds the MiSTer
-`.rbf`. You can also copy `cores/wwfwfest` into a local JTCORE checkout and run:
+1. rejects ROM/archive files;
+2. checks out a pinned official JTCORES/JTFRAME revision;
+3. overlays this core and applies the documented GFXFIX7 sync patch;
+4. builds the MiSTer `.rbf` and packages it with the matching MRA.
 
-```sh
-jtcore wwfwfest -mister
-```
-
-No ROM is needed for synthesis. ROM data is only required to run the game or
+No ROM is needed for synthesis. ROM data is required only to run the game or
 ROM-dependent simulations.
 
-## Testing and bug reports
+## Testing and reports
 
-See [docs/TESTING.md](docs/TESTING.md) before opening a report. Screenshots or
-short videos are valuable for graphics and timing issues; audio recordings are
-valuable for volume, balance and playback problems.
+See [docs/TESTING.md](docs/TESTING.md). Do not upload, attach or link to ROMs.
+Screenshots, short videos and audio recordings are welcome where relevant.
 
 ## JTFRAME and acknowledgements
 
-This core is built with **JTFRAME**, the FPGA development framework created by
-**José Tejada (`@topapate`, Jotego)**. JTFRAME provides the MiSTer integration,
-common FPGA modules, build tooling and development methodology used here.
+This core uses **JTFRAME**, created by **José Tejada (`@topapate`, Jotego)**.
+JTFRAME supplies MiSTer integration, shared FPGA modules and build tooling.
 
 - [Jotego's JTCORES repository](https://github.com/jotego/jtcores)
-- [JTFRAME documentation](https://github.com/jotego/jtcores/tree/master/modules/jtframe)
+- [JTFRAME source and documentation](https://github.com/jotego/jtcores/tree/master/modules/jtframe)
 - [Support Jotego's FPGA research](https://www.patreon.com/jotego)
 
-Thanks also to the MAME developers for documenting the original arcade
-hardware and ROM layout. MAME code and game ROMs are not part of this project.
+Thanks also to the MAME developers for documenting the original hardware and
+ROM layout. MAME code and game ROMs are not part of this repository.
 
-## Legal notice
+## Legal and licence
 
-WWF WrestleFest, its characters, trademarks and original game content belong
-to their respective rights holders. This is an unofficial, non-commercial
-hardware preservation and research project. It is not affiliated with or
-endorsed by Technos Japan, WWE, Tecmo, MiSTer, Jotego or any rights holder.
+WWF WrestleFest, its characters, trademarks and original content belong to
+their respective rights holders. This unofficial, non-commercial preservation
+project is not affiliated with or endorsed by Technos Japan, WWE, Tecmo,
+MiSTer, Jotego or any rights holder.
 
-No ROM files, game assets or proprietary software are provided. Requests for
-ROMs or links to unauthorized copies will not be accepted.
-
-## License
-
-The original source code in this repository is distributed under the
-[GNU General Public License v3.0](LICENSE), in accordance with JTFRAME's GPLv3
-licensing requirements. Third-party components retain their own notices and
-licenses.
+Original source in this repository is distributed under the
+[GNU General Public License v3.0](LICENSE), consistently with JTFRAME's GPLv3
+licensing. Third-party components retain their own notices and licences.
