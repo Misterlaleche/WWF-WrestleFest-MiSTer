@@ -1,0 +1,62 @@
+diff --git a/modules/jtframe/hdl/video/jtframe_resync.v b/modules/jtframe/hdl/video/jtframe_resync.v
+index 3850064..04f27cc 100755
+--- a/modules/jtframe/hdl/video/jtframe_resync.v
++++ b/modules/jtframe/hdl/video/jtframe_resync.v
+@@ -27,7 +27,7 @@ reg              last_LHBL, last_LVBL, last_hsin, last_vsin;
+ wire             hb_edge, hs_edge, hs_n_edge, vb_edge, vs_edge, vs_n_edge;
+ reg              field;
+ 
+-wire [CNTW-1:0]  hpos_off = WIDE==1 ? { {CNTW-5{hoffset[3]}}, hoffset[3:0], 1'b0 }:
++wire [CNTW-1:0]  hpos_off = WIDE==1 ? { {CNTW-6{hoffset[3]}}, hoffset[3:0], 2'b00 }:
+                                       { {CNTW-4{hoffset[3]}}, hoffset[3:0]  };
+ wire [CNTW-1:0]  htrip = hs_pos[field] + hpos_off;
+ wire [CNTW-1:0]  vs_htrip = vs_hpos[field] + hpos_off;
+diff --git a/modules/jtframe/target/mister/cfgstr b/modules/jtframe/target/mister/cfgstr
+index 2d62b16..eb64ddc 100644
+--- a/modules/jtframe/target/mister/cfgstr
++++ b/modules/jtframe/target/mister/cfgstr
+@@ -6,7 +6,7 @@
+ {{ if not (.JTFRAME_NOMRA_DIP) }}   DIP;                      {{ end }}
+ {{ if .JTFRAME_CHEAT }}             CHEAT;                    {{ end }}
+     P1,Video;
+-    P1oLO,CRT H offset,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;
++    P1oLO,CRT H offset,0,+4,+8,+12,+16,+20,+24,+28,-32,-28,-24,-20,-16,-12,-8,-4;
+     P1oPS,CRT V offset,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;
+     P1oG,CRT scale enable,Off,On;
+     H2P1oHK,CRT scale factor,0,+1,+2,+3,+4,+5,+6,+7,-8,-7,-6,-5,-4,-3,-2,-1;
+diff --git a/modules/jtframe/target/mister/hdl/jtframe_mister.sv b/modules/jtframe/target/mister/hdl/jtframe_mister.sv
+index 6270d89..52d27f7 100644
+--- a/modules/jtframe/target/mister/hdl/jtframe_mister.sv
++++ b/modules/jtframe/target/mister/hdl/jtframe_mister.sv
+@@ -239,6 +239,9 @@ wire [ 7:0] mouse_f;
+ wire        mouse_st;
+ 
+ wire        hs_resync, vs_resync;
++// WrestleFest diagnostic A/B: status[15]=1 bypasses jtframe_resync.
++wire        hs_syncsel = status[15] ? hs : hs_resync;
++wire        vs_syncsel = status[15] ? vs : vs_resync;
+ 
+ // Horizontal scaling for CRT
+ wire        hsize_enable;
+@@ -624,8 +627,8 @@ assign {sav_addr, sav_dout, sav_wr, sav_ack, sd_wait} = 0;
+         .r_in       ( game_r    ),
+         .g_in       ( game_g    ),
+         .b_in       ( game_b    ),
+-        .HS_in      ( hs_resync ),
+-        .VS_in      ( vs_resync ),
++        .HS_in      ( hs_syncsel ),
++        .VS_in      ( vs_syncsel ),
+         .HB_in      ( ~LHBL     ),
+         .VB_in      ( ~LVBL     ),
+         // filtered video
+@@ -638,8 +641,8 @@ assign {sav_addr, sav_dout, sav_wr, sav_ack, sd_wait} = 0;
+         .b_out      ( hsize_b   )
+     );
+ `else
+-    assign hsize_hs = hs_resync;
+-    assign hsize_vs = vs_resync;
++    assign hsize_hs = hs_syncsel;
++    assign hsize_vs = vs_syncsel;
+     assign hsize_hb = ~LHBL;
+     assign hsize_vb = ~LVBL;
+     assign hsize_r  = game_r;
