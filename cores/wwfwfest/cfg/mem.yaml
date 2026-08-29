@@ -15,7 +15,7 @@ clocks:
 audio:
   rsum: 6k
   channels:
-    - { name: pcm, module: jt6295, rsum: 10k, fir: fir_192k_4k.csv }
+    - { name: pcm, module: jt6295, rsum: 5k, fir: fir_192k_4k.csv }
     - { name: fm, module: jt51, rsum: 20k, rc: [{ r: 1rout, c: 1.2n }] }
 
 sdram:
