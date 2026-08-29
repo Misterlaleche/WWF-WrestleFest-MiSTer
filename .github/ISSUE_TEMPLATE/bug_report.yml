@@ -1,0 +1,59 @@
+name: MiSTer hardware test report
+description: Report a problem or a successful hardware test
+title: "[Test] "
+labels:
+  - testing
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for testing. Do not attach or link to ROM files.
+  - type: input
+    id: build
+    attributes:
+      label: Core release/build
+      placeholder: e.g. v0.1.0-test1
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Test result
+      options:
+        - Problem found
+        - Successful test
+    validations:
+      required: true
+  - type: input
+    id: mister
+    attributes:
+      label: MiSTer setup
+      description: Main version, SDRAM size and relevant hardware
+    validations:
+      required: true
+  - type: input
+    id: video
+    attributes:
+      label: Video output and display
+      placeholder: HDMI monitor, analogue VGA-to-SCART CRT, Direct Video, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Result or problem
+      description: Describe what happened and how to reproduce it.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Additional evidence
+      description: Screenshots, short video, audio recording or MiSTer.ini details.
+  - type: checkboxes
+    id: rom_notice
+    attributes:
+      label: ROM notice
+      options:
+        - label: I have not attached or linked to any ROM file.
+          required: true
