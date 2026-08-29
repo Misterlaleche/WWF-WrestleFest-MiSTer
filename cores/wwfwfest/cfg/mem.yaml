@@ -1,0 +1,123 @@
+params:
+  - { name: RAM_OFFSET, value: "22'h3F_0000" }
+  - { name: PCM_OFFSET, value: "(`PCM_START-`JTFRAME_BA1_START)>>1" }
+  - { name: SCR_OFFSET, value: "(`SCR_START-`JTFRAME_BA2_START)>>1" }
+
+cores: wwfwfest
+
+clocks:
+  clk:
+    - freq: 3579545
+      outputs: [cen_fm, cen_fm2]
+    - freq: 1056k
+      outputs: [cen_oki]
+
+audio:
+  rsum: 6k
+  channels:
+    - { name: pcm, module: jt6295, rsum: 10k, fir: fir_192k_4k.csv }
+    - { name: fm, module: jt51, rsum: 20k, rc: [{ r: 1rout, c: 1.2n }] }
+
+sdram:
+  banks:
+    - buses:
+      - name: ram
+        addr_width: 14
+        data_width: 16
+        din: main_dout
+        rw: true
+        offset: RAM_OFFSET
+      - name: main
+        addr_width: 19
+        data_width: 16
+    - buses:
+      - name: snd
+        addr_width: 16
+        data_width: 8
+      - name: pcm
+        addr_width: 19
+        data_width: 8
+        offset: PCM_OFFSET
+    - buses:
+      - name: char
+        addr_width: 17
+        data_width: 32
+        gfx_sort: hhvvv
+      # Both tile generators fetch concurrently from the same physical ROM
+      # image. JTFRAME arbitrates these as two logical buses in bank 2.
+      - name: fgrom
+        addr_width: 19
+        data_width: 32
+        offset: SCR_OFFSET
+      - name: bgrom
+        addr_width: 19
+        data_width: 32
+        offset: SCR_OFFSET
+    - buses:
+      - name: obj
+        addr_width: 23
+        data_width: 32
+
+bram:
+  # The four-byte layer has one attribute word and one code word per tile.
+  # Separate mirrors let the video port obtain both in the same pixel cycle.
+  - name: fgattr
+    addr_width: 11
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_fg_addr
+      din: main_dout
+      dout: main_fgattr_dout
+      we: fgattr_we
+      rw: true
+  - name: fgcode
+    addr_width: 11
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_fg_addr
+      din: main_dout
+      dout: main_fgcode_dout
+      we: fgcode_we
+      rw: true
+  - name: bg
+    addr_width: 12
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_bg_addr
+      din: main_dout
+      dout: main_bg_dout
+      we: bg_we
+      rw: true
+  - name: txt
+    addr_width: 12
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_txt_addr
+      din: main_txt_din
+      dout: main_txt_dout
+      we: txt_we
+      rw: true
+  - name: objram
+    addr_width: 13
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_objram_addr
+      din: main_dout
+      dout: main_objram_dout
+      we: objram_we
+      rw: true
+  - name: palram
+    addr_width: 14
+    data_width: 16
+    dual_port:
+      name: main
+      addr: main_palram_addr
+      din: main_dout
+      dout: main_palram_dout
+      we: palram_we
+      rw: true

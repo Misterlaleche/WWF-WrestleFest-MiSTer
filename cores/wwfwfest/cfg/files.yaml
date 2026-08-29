@@ -1,0 +1,18 @@
+wwfwfest:
+  - get:
+    - "*.v"
+jtframe:
+  - get:
+      - jtframe_edge.v
+  - from: video
+    get:
+      - jtframe_vtimer.v
+      - jtframe_scroll.yaml
+      - jtframe_obj.yaml
+  - from: cpu
+    get:
+      - jtframe_z80.yaml
+      - jtframe_m68k.yaml
+jt51:
+jt6295:
+
