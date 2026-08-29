@@ -1,0 +1,91 @@
+<!--          FPGA arcade hardware by Jotego
+
+              This core is available for hardware compatible with MiST and MiSTer
+              Other FPGA systems may be supported by the time you read this.
+              This work is not mantained by the MiSTer project. Please contact the
+              core author for issues and updates.
+
+              (c) Jose Tejada, 2026. Please support this research
+              Patreon: https://patreon.com/jotego
+
+              The author does not endorse or participate in illegal distribution
+              of copyrighted material. This work can be used with compatible
+              software. This software can be homebrew projects or legally
+              obtained memory dumps of compatible games.
+
+              This file license is GNU GPLv2.
+              You can read the whole license file in
+              https://opensource.org/licenses/gpl-2.0.php
+
+-->
+
+<misterromdescription>
+    <about author="jotego" webpage="https://patreon.com/jotego" twitter="@topapate" source="https://jotego/jtcores"/>
+    <rotation>horizontal</rotation>
+    <name>WWF WrestleFest (World)</name>
+    <setname>wwfwfest</setname>
+    <mameversion>0282</mameversion>
+    <year>1991</year>
+    <manufacturer>Technos Japan (Tecmo license)</manufacturer>
+    <players>4</players>
+    <rbf>jtwwfwfest</rbf>
+    <joystick>8</joystick>
+    <region>World</region>
+    <rom index="0" zip="wwfwfest.zip" md5="None">
+        <!-- maincpu - starts at 0x0 - length 0x80000 (19 bits) -->
+        <interleave output="16">
+            <part name="31e13-0.ic19" crc="bd02e3c4" map="01"/>
+            <part name="31e14-0.ic18" crc="933ea1a0" map="10"/>
+        </interleave>
+        <!-- JTFRAME_BA1_START -->
+        <!-- audiocpu - starts at 0x80000 - length 0x10000 (16 bits) -->
+        <part name="31a11-2.ic42" crc="5ddebfea"/>
+        <!-- PCM_START -->
+        <!-- oki - starts at 0x90000 - length 0x80000 (19 bits) -->
+        <part name="31j10.ic73" crc="6c522edb"/>
+        <!-- JTFRAME_BA2_START -->
+        <!-- gfx1 - starts at 0x110000 - length 0x20000 (17 bits) -->
+        <part name="31e12-0.ic33" crc="06f22615"/>
+        <!-- SCR_START -->
+        <!-- gfx3 - starts at 0x130000 - length 0xD0000 (20 bits) -->
+        <interleave output="16">
+            <part name="31j1.ic2" crc="82ed7155" map="01"/>
+            <part name="31j0.ic1" crc="8a12b450" map="10"/>
+        </interleave>
+        <part repeat="0x50000"> FF</part>
+        <!-- JTFRAME_BA3_START -->
+        <!-- gfx2 - starts at 0x200000 - length 0x800000 (23 bits) -->
+        <interleave output="32">
+            <part name="31j3.ic9" crc="e395cf1d" map="0001"/>
+            <part name="31j5.ic11" crc="2ce545e8" map="0010"/>
+            <part name="31j6.ic12" crc="79956cf8" map="0100"/>
+            <part name="31j9.ic15" crc="dd387289" map="1000"/>
+        </interleave>
+        <interleave output="32">
+            <part name="31j2.ic8" crc="b5a97465" map="0001"/>
+            <part name="31j4.ic10" crc="00edb66a" map="0010"/>
+            <part name="31j7.ic13" crc="74d774c3" map="0100"/>
+            <part name="31j8.ic14" crc="44abe127" map="1000"/>
+        </interleave>
+        <!-- Total 0xA00000 bytes - 10240 kBytes -->
+    </rom>
+    <rom index="1">
+        <part>00 80</part>
+    </rom>
+    <switches page_id="1" page_name="Switches" base="16" default="ef,ff">
+        <DSW1/>
+        <dip name="Coin A" bits="0,1" ids="3/1,2/1,1/2,1/1"/>
+        <dip name="Buy In Price" bits="2" ids="Start price,1"/>
+        <dip name="Regain Price" bits="3" ids="Start price,1"/>
+        <dip name="Continue Price" bits="4" ids="Start price,1"/>
+        <dip name="Demo Sounds" bits="5" ids="Off,On"/>
+        <dip name="Flip Screen" bits="6" ids="On,Off"/>
+        <dip name="FBI Logo" bits="7" ids="Off,On"/>
+        <DSW2/>
+        <dip name="Difficulty" bits="8,9" ids="Hardest,Hard,Easy,Normal"/>
+        <dip name="Players" bits="10,11" ids="-,2,3,4"/>
+        <dip name="Clear Stage Power Up" bits="13,14" ids="0,12,32,24"/>
+        <dip name="Championship Game" bits="15" ids="4th,5th"/>
+    </switches>
+    <buttons names="Punch,Kick,Start,Coin,Core credits" default="A,B,Start,Select,-" count="2"/>
+</misterromdescription>
