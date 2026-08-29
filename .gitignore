@@ -1,0 +1,34 @@
+# Local game data: never commit copyrighted ROM material
+*.rom
+*.chd
+*.7z
+*.rar
+*.zip
+games/
+roms/
+
+# Simulation output and waveforms
+*.vcd
+*.fst
+*.wav
+*.mp4
+*.png
+obj_dir/
+sim/
+log/
+
+# FPGA build products
+*.rbf
+*.sof
+*.pof
+*.qws
+*.rpt
+*.summary
+output_files/
+incremental_db/
+db/
+
+# Local editor and OS files
+.DS_Store
+.idea/
+.vscode/
