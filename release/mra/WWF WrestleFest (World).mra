@@ -1,26 +1,5 @@
-<!--          FPGA arcade hardware by Jotego
-
-              This core is available for hardware compatible with MiST and MiSTer
-              Other FPGA systems may be supported by the time you read this.
-              This work is not mantained by the MiSTer project. Please contact the
-              core author for issues and updates.
-
-              (c) Jose Tejada, 2026. Please support this research
-              Patreon: https://patreon.com/jotego
-
-              The author does not endorse or participate in illegal distribution
-              of copyrighted material. This work can be used with compatible
-              software. This software can be homebrew projects or legally
-              obtained memory dumps of compatible games.
-
-              This file license is GNU GPLv2.
-              You can read the whole license file in
-              https://opensource.org/licenses/gpl-2.0.php
-
--->
-
 <misterromdescription>
-    <about author="jotego" webpage="https://patreon.com/jotego" twitter="@topapate" source="https://jotego/jtcores"/>
+    <about author="Misterlaleche"/>
     <rotation>horizontal</rotation>
     <name>WWF WrestleFest (World)</name>
     <setname>wwfwfest</setname>
@@ -31,7 +10,7 @@
     <rbf>jtwwfwfest</rbf>
     <joystick>8</joystick>
     <region>World</region>
-    <rom index="0" zip="wwfwfest.zip" md5="None">
+    <rom index="0" zip="wwfwfest.zip" md5="None" asm_md5="98e370ce34d9c1a5dcefd6203dd83198">
         <!-- maincpu - starts at 0x0 - length 0x80000 (19 bits) -->
         <interleave output="16">
             <part name="31e13-0.ic19" crc="bd02e3c4" map="01"/>
@@ -75,9 +54,9 @@
     <switches page_id="1" page_name="Switches" base="16" default="ef,ff">
         <DSW1/>
         <dip name="Coin A" bits="0,1" ids="3/1,2/1,1/2,1/1"/>
-        <dip name="Buy In Price" bits="2" ids="Start price,1"/>
-        <dip name="Regain Price" bits="3" ids="Start price,1"/>
-        <dip name="Continue Price" bits="4" ids="Start price,1"/>
+        <dip name="Buy In Price" bits="2" ids="As start price,1"/>
+        <dip name="Regain Power Price" bits="3" ids="As start price,1"/>
+        <dip name="Continue Price" bits="4" ids="As start price,1"/>
         <dip name="Demo Sounds" bits="5" ids="Off,On"/>
         <dip name="Flip Screen" bits="6" ids="On,Off"/>
         <dip name="FBI Logo" bits="7" ids="Off,On"/>
@@ -87,5 +66,5 @@
         <dip name="Clear Stage Power Up" bits="13,14" ids="0,12,32,24"/>
         <dip name="Championship Game" bits="15" ids="4th,5th"/>
     </switches>
-    <buttons names="Punch,Kick,Start,Coin,Core credits" default="A,B,Start,Select,-" count="2"/>
+    <buttons names="Punch,Kick,Start,Coin" default="A,B,Start,Select" count="2"/>
 </misterromdescription>
