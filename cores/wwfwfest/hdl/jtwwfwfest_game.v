@@ -11,11 +11,36 @@ wire [15:0] fg_scrollx, fg_scrolly, bg_scrollx, bg_scrolly;
 wire [ 7:0] prio, snd_latch;
 wire        flip, snd_on, objbuf_trig, irq2_tick;
 wire [ 1:0] pxl_cens;
+wire signed [13:0] pcm_raw;
+wire signed [14:0] pcm_ext = {{1{pcm_raw[13]}},pcm_raw};
+reg  signed [14:0] pcm_level;
+reg  signed [13:0] pcm_osd;
+
+// OSD FX level: 0=very low, 1=low, 2=high(default), 3=very high.
+always @* begin
+    case(dip_fxlevel)
+        2'd0: pcm_level = pcm_ext >>> 1;
+        2'd1: pcm_level = pcm_ext - (pcm_ext >>> 2);
+        2'd2: pcm_level = pcm_ext;
+        default: pcm_level = pcm_ext + (pcm_ext >>> 2);
+    endcase
+    if(pcm_level > 15'sd8191)
+        pcm_osd = 14'sd8191;
+    else if(pcm_level < -15'sd8192)
+        pcm_osd = -14'sd8192;
+    else
+        pcm_osd = pcm_level[13:0];
+end
+assign pcm = pcm_osd;
+
 
 assign ram_addr   = main_addr[13:1];
 assign dip_flip   = flip;
 assign debug_view = prio;
 assign {pxl_cen,pxl2_cen} = pxl_cens;
+`ifndef JTFRAME_RELEASE
+assign ioctl_din  = 8'h00;
+`endif
 
 // The PCB pixel clock is exactly 28 MHz / 4 = 7 MHz. JTFRAME's built-in
 // integer pixel divider only supports 6 or 8 MHz, so derive 14/7 MHz enables
@@ -45,10 +70,7 @@ jtwwfw_main u_main(
     .snd_on(snd_on), .snd_latch(snd_latch),
     .joystick1(joystick1), .joystick2(joystick2),
     .joystick3(joystick3), .joystick4(joystick4),
-    // WWF WrestleFest has a single active-low service input. Merge the
-    // momentary Service key with JTFRAME's persistent Service/Test OSD
-    // switch so either one can hold the PCB input active.
-    .start_button(cab_1p), .coin(coin), .service(service & dip_test),
+    .start_button(cab_1p), .coin(coin), .service(service),
     .dip_pause(dip_pause), .dipsw_a(dipsw[7:0]), .dipsw_b(dipsw[15:8])
 );
 
@@ -79,7 +101,7 @@ jtwwfw_sound u_sound(
     .cen_oki(cen_oki), .snd_on(snd_on), .snd_latch(snd_latch),
     .rom_addr(snd_addr), .rom_cs(snd_cs), .rom_data(snd_data), .rom_ok(snd_ok),
     .pcm_addr(pcm_addr), .pcm_cs(pcm_cs), .pcm_data(pcm_data), .pcm_ok(pcm_ok),
-    .fm_l(fm_l), .fm_r(fm_r), .pcm(pcm)
+    .fm_l(fm_l), .fm_r(fm_r), .pcm(pcm_raw)
 );
 
 endmodule

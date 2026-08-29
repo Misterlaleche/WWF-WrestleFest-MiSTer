@@ -58,6 +58,13 @@ module jtwwfw_video(
 );
 
 wire [8:0] hcnt, vcnt;
+wire       HS_INT;
+// JTFRAME tilemap outputs one 8-pixel fetch group after the address phase.
+// Rotate the 448-pixel raster by one group for tile layers only so
+// h=440..447 prefetches logical x=0..7 before active video starts.
+// Sprites keep native hcnt coordinates; this also restores tile/sprite X registration.
+wire [8:0] htile = (hcnt >= 9'd440) ? (hcnt - 9'd440) : (hcnt + 9'd8);
+
 wire [8:0] vpos = vcnt - 9'd8;
 wire [9:0] fg_map_addr, bg_map_addr;
 wire [7:0] txt_pxl, fg_pxl, bg_pxl, obj_pxl;
@@ -84,27 +91,24 @@ assign bgrom_cs    = bg_cs;
 // Repack the native ROM wiring into plane3..plane0 bytes as required by
 // jtframe_tilemap. These permutations match the Technos WWF graphics family.
 assign char_sorted = {
-    char_data[15],char_data[14],char_data[ 7],char_data[ 6],
-    char_data[31],char_data[30],char_data[23],char_data[22],
-    char_data[13],char_data[12],char_data[ 5],char_data[ 4],
-    char_data[29],char_data[28],char_data[21],char_data[20],
-    char_data[11],char_data[10],char_data[ 3],char_data[ 2],
-    char_data[27],char_data[26],char_data[19],char_data[18],
-    char_data[ 9],char_data[ 8],char_data[ 1],char_data[ 0],
-    char_data[25],char_data[24],char_data[17],char_data[16]
+    char_data[ 6],char_data[ 7],char_data[14],char_data[15],char_data[22],char_data[23],char_data[30],char_data[31],char_data[ 4],char_data[ 5],char_data[12],char_data[13],char_data[20],char_data[21],char_data[28],char_data[29],char_data[ 2],char_data[ 3],char_data[10],char_data[11],char_data[18],char_data[19],char_data[26],char_data[27],char_data[ 0],char_data[ 1],char_data[ 8],char_data[ 9],char_data[16],char_data[17],char_data[24],char_data[25]
 };
 
 jtwwfw_timing u_timing(
     .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hcnt(hcnt), .vcnt(vcnt),
-    .LHBL(LHBL), .LVBL(LVBL), .HS(HS), .VS(VS), .irq2_tick(irq2_tick)
+    .LHBL(LHBL), .LVBL(LVBL), .HS(HS_INT), .VS(VS), .irq2_tick(irq2_tick)
 );
+
+// External CRT-centred HSYNC: +40 px relative to original.
+// Active raster moves about 40 pixels left; total remains 448.
+assign HS = (hcnt >= 9'd376 && hcnt < 9'd408);
 
 jtframe_tilemap #(
     .SIZE(8), .VA(11), .CW(12), .PW(8), .MAP_HW(9), .MAP_VW(8),
     .HDUMPW(9), .VDUMPW(9), .HJUMP(0), .FLIP_MSB(0)
 ) u_text(
     .rst(rst), .clk(clk), .pxl_cen(pxl_cen),
-    .vdump(vpos), .hdump(hcnt), .blankn(LVBL), .flip(flip),
+    .vdump(vpos), .hdump(htile), .blankn(LVBL), .flip(flip),
     // First text RAM entry is packed in the high byte; the second entry,
     // containing code[11:8] and palette, is packed in the low byte.
     .vram_addr(txt_addr), .code({txt_dout[3:0],txt_dout[15:8]}),
@@ -117,46 +121,28 @@ jtframe_scroll #(
     .SIZE(16), .VA(10), .CW(12), .PW(8), .MAP_HW(9), .MAP_VW(9),
     .HJUMP(0), .XOR_HFLIP(1), .XOR_VFLIP(1)
 ) u_fg(
-    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS),
-    .vdump(vpos), .hdump(hcnt), .blankn(LVBL), .flip(flip),
+    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS_INT),
+    .vdump(vpos), .hdump(htile), .blankn(LVBL), .flip(flip),
     .scrx(fg_x), .scry(fg_y), .vram_addr(fg_map_addr),
     .code(fgcode_dout[11:0]), .pal(fgattr_dout[3:0]),
     .hflip(fgattr_dout[6]), .vflip(fgattr_dout[7]),
-    .rom_addr(fg_rom_addr), .rom_data({
-        fgrom_data[ 8],fgrom_data[ 9],fgrom_data[10],fgrom_data[11],
-        fgrom_data[12],fgrom_data[13],fgrom_data[14],fgrom_data[15],
-        fgrom_data[24],fgrom_data[25],fgrom_data[26],fgrom_data[27],
-        fgrom_data[28],fgrom_data[29],fgrom_data[30],fgrom_data[31],
-        fgrom_data[ 0],fgrom_data[ 1],fgrom_data[ 2],fgrom_data[ 3],
-        fgrom_data[ 4],fgrom_data[ 5],fgrom_data[ 6],fgrom_data[ 7],
-        fgrom_data[16],fgrom_data[17],fgrom_data[18],fgrom_data[19],
-        fgrom_data[20],fgrom_data[21],fgrom_data[22],fgrom_data[23]
-    }), .rom_cs(fg_cs), .rom_ok(fgrom_ok), .pxl(fg_pxl)
+    .rom_addr(fg_rom_addr), .rom_data({fgrom_data[23:16],fgrom_data[7:0],fgrom_data[31:24],fgrom_data[15:8]}), .rom_cs(fg_cs), .rom_ok(fgrom_ok), .pxl(fg_pxl)
 );
 
 jtframe_scroll #(
     .SIZE(16), .VA(10), .CW(12), .PW(8), .MAP_HW(9), .MAP_VW(9),
     .HJUMP(0), .XOR_HFLIP(1), .XOR_VFLIP(1)
 ) u_bg(
-    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS),
-    .vdump(vpos), .hdump(hcnt), .blankn(LVBL), .flip(flip),
+    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS_INT),
+    .vdump(vpos), .hdump(htile), .blankn(LVBL), .flip(flip),
     .scrx(bg_x), .scry(bg_y), .vram_addr(bg_map_addr),
     .code(bg_dout[11:0]), .pal(bg_dout[15:12]),
     .hflip(1'b0), .vflip(1'b0),
-    .rom_addr(bg_rom_addr), .rom_data({
-        bgrom_data[ 8],bgrom_data[ 9],bgrom_data[10],bgrom_data[11],
-        bgrom_data[12],bgrom_data[13],bgrom_data[14],bgrom_data[15],
-        bgrom_data[24],bgrom_data[25],bgrom_data[26],bgrom_data[27],
-        bgrom_data[28],bgrom_data[29],bgrom_data[30],bgrom_data[31],
-        bgrom_data[ 0],bgrom_data[ 1],bgrom_data[ 2],bgrom_data[ 3],
-        bgrom_data[ 4],bgrom_data[ 5],bgrom_data[ 6],bgrom_data[ 7],
-        bgrom_data[16],bgrom_data[17],bgrom_data[18],bgrom_data[19],
-        bgrom_data[20],bgrom_data[21],bgrom_data[22],bgrom_data[23]
-    }), .rom_cs(bg_cs), .rom_ok(bgrom_ok), .pxl(bg_pxl)
+    .rom_addr(bg_rom_addr), .rom_data({bgrom_data[23:16],bgrom_data[7:0],bgrom_data[31:24],bgrom_data[15:8]}), .rom_cs(bg_cs), .rom_ok(bgrom_ok), .pxl(bg_pxl)
 );
 
 jtwwfw_obj u_obj(
-    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS), .flip(flip),
+    .rst(rst), .clk(clk), .pxl_cen(pxl_cen), .hs(HS_INT), .flip(flip),
     .hdump(hcnt), .vcnt(vcnt), .objbuf_trig(objbuf_trig),
     .objram_addr(objram_addr), .objram_dout(objram_dout),
     .obj_addr(obj_addr), .obj_cs(obj_cs), .obj_data(obj_data),
@@ -186,6 +172,6 @@ always @* begin
     endcase
 end
 
-assign {blue,green,red} = LHBL && LVBL ? palram_dout[11:0] : 12'h000;
+assign {blue,green,red} = !rst && LHBL && LVBL ? palram_dout[11:0] : 12'h000;
 
 endmodule

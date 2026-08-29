@@ -24,6 +24,8 @@ module jtwwfw_obj(
 );
 
 reg [127:0] descriptors [0:511];
+// Number of enabled entries in the compact buffered list.
+reg [9:0] active_count;
 reg [127:0] build;
 reg [11:0] copy_addr, read_addr;
 reg        copying, issuing, read_valid;
@@ -40,6 +42,7 @@ always @(posedge clk) begin
         read_addr   <= 0;
         objram_addr <= 0;
         build       <= 0;
+        active_count <= 0;
     end else begin
         if(objbuf_trig) begin
             copying     <= 1;
@@ -47,11 +50,15 @@ always @(posedge clk) begin
             read_valid  <= 0;
             copy_addr   <= 12'd1;
             objram_addr <= 0;
+            active_count <= 0;
         end else if(copying) begin
             if(read_valid) begin
                 build[read_addr[2:0]*16 +: 16] <= objram_dout;
-                if(read_addr[2:0] == 3'd7)
-                    descriptors[read_addr[11:3]] <= {objram_dout,build[111:0]};
+                if(read_addr[2:0] == 3'd7 && build[16]) begin
+                    // Compact only enabled sprites, preserving original order.
+                    descriptors[active_count[8:0]] <= {objram_dout,build[111:0]};
+                    active_count <= active_count + 1'd1;
+                end
                 if(read_addr == 12'hfff) begin
                     copying    <= 0;
                     read_valid <= 0;
@@ -131,7 +138,7 @@ always @(posedge clk) begin
         draw_pal <= 0;
     end else if(hs && !hs_l) begin
         scan_idx <= 0;
-        scan_st  <= 1;
+        scan_st  <= active_count == 0 ? 0 : 1;
     end else case(scan_st)
         0: ;
         1: begin
@@ -147,7 +154,7 @@ always @(posedge clk) begin
                 draw_vflip <= effective_vflip;
                 draw_pal   <= w4[3:0];
                 scan_st    <= 3;
-            end else if(scan_idx == 9'h1ff) begin
+            end else if(({1'b0,scan_idx} + 10'd1 >= active_count)) begin
                 scan_st <= 0;
             end else begin
                 scan_idx <= scan_idx + 1'd1;
@@ -156,7 +163,7 @@ always @(posedge clk) begin
         end
         3: if(!draw_busy) begin
             draw <= 1;
-            if(scan_idx == 9'h1ff) scan_st <= 0;
+            if(({1'b0,scan_idx} + 10'd1 >= active_count)) scan_st <= 0;
             else begin
                 scan_idx <= scan_idx + 1'd1;
                 scan_st  <= 1;
@@ -166,18 +173,11 @@ always @(posedge clk) begin
 end
 
 wire [31:0] sorted = {
-    obj_data[ 8],obj_data[ 9],obj_data[10],obj_data[11],
-    obj_data[12],obj_data[13],obj_data[14],obj_data[15],
-    obj_data[ 0],obj_data[ 1],obj_data[ 2],obj_data[ 3],
-    obj_data[ 4],obj_data[ 5],obj_data[ 6],obj_data[ 7],
-    obj_data[24],obj_data[25],obj_data[26],obj_data[27],
-    obj_data[28],obj_data[29],obj_data[30],obj_data[31],
-    obj_data[16],obj_data[17],obj_data[18],obj_data[19],
-    obj_data[20],obj_data[21],obj_data[22],obj_data[23]
+    obj_data[ 0],obj_data[ 1],obj_data[ 2],obj_data[ 3],obj_data[ 4],obj_data[ 5],obj_data[ 6],obj_data[ 7],obj_data[ 8],obj_data[ 9],obj_data[10],obj_data[11],obj_data[12],obj_data[13],obj_data[14],obj_data[15],obj_data[16],obj_data[17],obj_data[18],obj_data[19],obj_data[20],obj_data[21],obj_data[22],obj_data[23],obj_data[24],obj_data[25],obj_data[26],obj_data[27],obj_data[28],obj_data[29],obj_data[30],obj_data[31]
 };
 
 jtframe_objdraw #(
-    .AW(9),.CW(16),.PW(8),.HJUMP(0),.LATCH(1),.PACKED(0),
+    .AW(9),.CW(16),.PW(8),.HJUMP(0),.HFIX(0),.LATCH(1),.PACKED(0),
     .FLIP_OFFSET(320)
 )
 u_draw(
