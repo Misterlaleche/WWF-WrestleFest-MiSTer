@@ -51,6 +51,7 @@ jobs:
       - name: Add the WWF WrestleFest core
         run: |
           cp -a cores/wwfwfest jtcores/cores/
+          cp doc/custom.xml jtcores/doc/custom.xml
 
       - name: Compile MiSTer RBF with JTFRAME
         working-directory: jtcores
