@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Machine metadata used by JTFRAME to generate the MRA.
+  This file contains filenames, sizes and checksums only. It contains no ROM data.
+-->
+<mame>
+  <machine name="wwfwfest" sourcefile="technos/ddragon3.cpp">
+    <description>WWF WrestleFest (World)</description>
+    <year>1991</year>
+    <manufacturer>Technos Japan (Tecmo license)</manufacturer>
+    <rom name="31e13-0.ic19" size="262144" crc="bd02e3c4" region="maincpu" offset="1"/>
+    <rom name="31e14-0.ic18" size="262144" crc="933ea1a0" region="maincpu" offset="0"/>
+    <rom name="31a11-2.ic42" size="65536" crc="5ddebfea" region="audiocpu" offset="0"/>
+    <rom name="31j10.ic73" size="524288" crc="6c522edb" region="oki" offset="0"/>
+    <rom name="31e12-0.ic33" size="131072" crc="06f22615" region="gfx1" offset="0"/>
+    <rom name="31j3.ic9" size="1048576" crc="e395cf1d" region="gfx2" offset="0"/>
+    <rom name="31j2.ic8" size="1048576" crc="b5a97465" region="gfx2" offset="100000"/>
+    <rom name="31j5.ic11" size="1048576" crc="2ce545e8" region="gfx2" offset="200000"/>
+    <rom name="31j4.ic10" size="1048576" crc="00edb66a" region="gfx2" offset="300000"/>
+    <rom name="31j6.ic12" size="1048576" crc="79956cf8" region="gfx2" offset="400000"/>
+    <rom name="31j7.ic13" size="1048576" crc="74d774c3" region="gfx2" offset="500000"/>
+    <rom name="31j9.ic15" size="1048576" crc="dd387289" region="gfx2" offset="600000"/>
+    <rom name="31j8.ic14" size="1048576" crc="44abe127" region="gfx2" offset="700000"/>
+    <rom name="31j0.ic1" size="262144" crc="8a12b450" region="gfx3" offset="40000"/>
+    <rom name="31j1.ic2" size="262144" crc="82ed7155" region="gfx3" offset="0"/>
+    <display rotate="0" width="320" height="240"/>
+    <input players="4">
+      <control type="joy" player="1" buttons="2" ways="8"/>
+      <control type="joy" player="2" buttons="2" ways="8"/>
+      <control type="joy" player="3" buttons="2" ways="8"/>
+      <control type="joy" player="4" buttons="2" ways="8"/>
+    </input>
+    <dipswitch name="Coin A" tag="DSW1" mask="3">
+      <diplocation name="SW1" number="1"/><diplocation name="SW1" number="2"/>
+      <dipvalue name="3 Coins/1 Credit" value="0"/><dipvalue name="2 Coins/1 Credit" value="1"/>
+      <dipvalue name="1 Coin/2 Credits" value="2"/><dipvalue name="1 Coin/1 Credit" value="3" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Buy In Price" tag="DSW1" mask="4">
+      <diplocation name="SW1" number="3"/><dipvalue name="Start price" value="0"/><dipvalue name="1 Coin" value="4" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Regain Price" tag="DSW1" mask="8">
+      <diplocation name="SW1" number="4"/><dipvalue name="Start price" value="0"/><dipvalue name="1 Coin" value="8" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Continue Price" tag="DSW1" mask="16">
+      <diplocation name="SW1" number="5"/><dipvalue name="Start price" value="0" default="yes"/><dipvalue name="1 Coin" value="16"/>
+    </dipswitch>
+    <dipswitch name="Demo Sounds" tag="DSW1" mask="32">
+      <diplocation name="SW1" number="6"/><dipvalue name="Off" value="0"/><dipvalue name="On" value="32" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Flip Screen" tag="DSW1" mask="64">
+      <diplocation name="SW1" number="7"/><dipvalue name="On" value="0"/><dipvalue name="Off" value="64" default="yes"/>
+    </dipswitch>
+    <dipswitch name="FBI Logo" tag="DSW1" mask="128">
+      <diplocation name="SW1" number="8"/><dipvalue name="Off" value="0"/><dipvalue name="On" value="128" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Difficulty" tag="DSW2" mask="3">
+      <diplocation name="SW2" number="1"/><diplocation name="SW2" number="2"/>
+      <dipvalue name="Hardest" value="0"/><dipvalue name="Hard" value="1"/>
+      <dipvalue name="Easy" value="2"/><dipvalue name="Normal" value="3" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Players" tag="DSW2" mask="12">
+      <diplocation name="SW2" number="3"/><diplocation name="SW2" number="4"/>
+      <dipvalue name="2" value="4"/><dipvalue name="3" value="8"/><dipvalue name="4" value="12" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Clear Stage Power Up" tag="DSW2" mask="96">
+      <diplocation name="SW2" number="6"/><diplocation name="SW2" number="7"/>
+      <dipvalue name="0" value="0"/><dipvalue name="12" value="32"/>
+      <dipvalue name="32" value="64"/><dipvalue name="24" value="96" default="yes"/>
+    </dipswitch>
+    <dipswitch name="Championship Game" tag="DSW2" mask="128">
+      <diplocation name="SW2" number="8"/><dipvalue name="4th" value="0"/><dipvalue name="5th" value="128" default="yes"/>
+    </dipswitch>
+  </machine>
+</mame>
