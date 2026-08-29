@@ -1,0 +1,77 @@
+name: Build MiSTer core
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "cores/wwfwfest/**"
+      - "release/mra/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "cores/wwfwfest/**"
+      - "release/mra/**"
+      - ".github/workflows/build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out core source
+        uses: actions/checkout@v5
+
+      - name: Reject ROMs and proprietary game data
+        shell: bash
+        run: |
+          if find . -type f \( \
+            -iname '*.zip' -o -iname '*.7z' -o -iname '*.rar' -o \
+            -iname '*.rom' -o -iname '*.chd' -o -iname '*.bin' \
+          \) -print -quit | grep -q .; then
+            echo "Prohibited ROM/archive file detected"
+            exit 1
+          fi
+
+      - name: Check out JTCORES and JTFRAME
+        uses: actions/checkout@v5
+        with:
+          repository: jotego/jtcores
+          path: jtcores
+          submodules: false
+
+      - name: Restore required public modules
+        working-directory: jtcores
+        run: |
+          git submodule update --init --depth=1 \
+            modules/fx68k modules/jt51 modules/jt6295
+
+      - name: Add the WWF WrestleFest core
+        run: |
+          cp -a cores/wwfwfest jtcores/cores/
+
+      - name: Compile MiSTer RBF with JTFRAME
+        working-directory: jtcores
+        run: |
+          docker run --network host -v "$(pwd)":/jtcores \
+            jotego/jtcore20 \
+            /jtcores/modules/jtframe/devops/xjtcore.sh wwfwfest mister
+
+      - name: Collect test build
+        shell: bash
+        run: |
+          mkdir -p artifact
+          find jtcores/release -type f -iname '*wwfwfest*.rbf' \
+            -exec cp -v {} artifact/jtwwfwfest.rbf \;
+          cp 'release/mra/WWF WrestleFest (World).mra' artifact/
+          test -f artifact/jtwwfwfest.rbf
+
+      - name: Upload MiSTer test build
+        uses: actions/upload-artifact@v6
+        with:
+          name: WWF-WrestleFest-MiSTer-${{ github.sha }}
+          path: artifact
+          if-no-files-found: error
+          retention-days: 30
